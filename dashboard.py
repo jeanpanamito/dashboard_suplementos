@@ -729,9 +729,25 @@ def apply_filters(df, filters):
 # ==================== INTERFAZ PRINCIPAL ====================
 
 # Header principal
-st.markdown(f"""
+st.markdown("""
 <div class="main-header">
-    <h1 style="color: white; margin: 0; text-align: center;">{Config.PAGE_ICON} {Config.PAGE_TITLE}</h1>
+""", unsafe_allow_html=True)
+
+# Logo en esquina superior derecha y título centrado
+title_col, logo_col = st.columns([4, 1])
+with title_col:
+    st.markdown(f"""
+    <h1 style="color: white; margin: 0; text-align: center; line-height: 100px;">
+        {Config.PAGE_TITLE}
+    </h1>
+    """, unsafe_allow_html=True)
+with logo_col:
+    try:
+        st.image("gainsight.png", width=100)
+    except:
+        st.write("🏋️")  # Fallback si no encuentra la imagen
+
+st.markdown("""
     <p style="color: #e0e0e0; margin: 0; text-align: center; font-size: 1.2em;">Dashboard de Inteligencia de Mercado para Suplementos Deportivos</p>
 </div>
 """, unsafe_allow_html=True)

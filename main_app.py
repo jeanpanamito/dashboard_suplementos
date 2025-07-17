@@ -1,14 +1,14 @@
 import streamlit as st
 
 st.set_page_config(
-    page_title="SuppMarket Intelligence Suite",
+    page_title="Gainsight Suite",
     page_icon="💪",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # Página principal con navegación
-st.title("💪 SuppMarket Intelligence Suite")
+st.title("Gainsight Suite")
 st.markdown("### Dashboard Completo de Inteligencia de Mercado para Suplementos")
 
 st.markdown("""

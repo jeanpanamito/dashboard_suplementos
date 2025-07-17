@@ -24,8 +24,8 @@ class Config:
     CACHE_TTL = int(os.getenv('CACHE_TTL', 300))  # 5 minutos
     
     # Configuración de la app (corregido el typo "appm")
-    PAGE_TITLE = "SuppMarket Intelligence"
-    PAGE_ICON = "💪"
+    PAGE_TITLE = "Gainsight"
+    PAGE_ICON = ""
     
     # Variables de entorno adicionales
     DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 'yes')
