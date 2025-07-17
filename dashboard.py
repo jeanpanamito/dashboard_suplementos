@@ -936,7 +936,7 @@ with st.expander("🔧 Panel de Control Avanzado"):
         if st.button("🎯 Análisis de Competidores"):
             st.info("Análisis competitivo avanzado próximamente")
 
-# Alertas automáticas basadas en los datos
+# Alertas automáticas basadas en los datos con productos específicos
 st.markdown("### 🚨 Alertas de Mercado")
 alerts_col1, alerts_col2, alerts_col3 = st.columns(3)
 
@@ -948,11 +948,27 @@ with alerts_col1:
             st.markdown("""
             <div class="warning-box">
                 <h5>💰 Productos de Precio Elevado</h5>
-                <p>{} productos con precios en el top 5%</p>
-                <p>Precio promedio: ${:.2f}</p>
+                <p><strong>{} productos</strong> con precios en el top 5%</p>
+                <p>Precio promedio: <strong>${:.2f}</strong></p>
             </div>
             """.format(len(high_price_products), high_price_products['precio_num'].mean()), 
             unsafe_allow_html=True)
+            
+            # Expandible con lista de productos
+            with st.expander(f"📋 Ver {len(high_price_products)} productos de precio elevado"):
+                for idx, (_, product) in enumerate(high_price_products.head(10).iterrows(), 1):
+                    precio = product.get('precio_num', 0)
+                    producto_nombre = product.get('producto', 'Producto sin nombre')
+                    fuente = product.get('fuente', 'N/A')
+                    rating = product.get('rating_num', 0)
+                    
+                    st.markdown(f"""
+                    **{idx}. {producto_nombre[:60]}{'...' if len(producto_nombre) > 60 else ''}**  
+                    💰 **${precio:.2f}** | ⭐ {rating:.1f} | 🏪 {fuente}
+                    """)
+                    
+                if len(high_price_products) > 10:
+                    st.info(f"💡 Mostrando los primeros 10 de {len(high_price_products)} productos")
 
 with alerts_col2:
     # Productos con ratings bajos
@@ -962,11 +978,39 @@ with alerts_col2:
             st.markdown("""
             <div class="warning-box">
                 <h5>⭐ Productos de Baja Calidad</h5>
-                <p>{} productos con rating < 3.5</p>
+                <p><strong>{} productos</strong> con rating < 3.5</p>
                 <p>Requieren atención especial</p>
             </div>
             """.format(len(low_rating_products)), 
             unsafe_allow_html=True)
+            
+            # Expandible con lista de productos
+            with st.expander(f"📋 Ver {len(low_rating_products)} productos de baja calidad"):
+                # Ordenar por rating más bajo primero
+                low_rating_sorted = low_rating_products.sort_values('rating_num', ascending=True)
+                
+                for idx, (_, product) in enumerate(low_rating_sorted.head(10).iterrows(), 1):
+                    precio = product.get('precio_num', 0)
+                    producto_nombre = product.get('producto', 'Producto sin nombre')
+                    fuente = product.get('fuente', 'N/A')
+                    rating = product.get('rating_num', 0)
+                    reviews = product.get('reviews_num', 0)
+                    
+                    # Determinar color de alerta
+                    if rating < 2.0:
+                        emoji_alert = "🔴"
+                    elif rating < 3.0:
+                        emoji_alert = "🟡"
+                    else:
+                        emoji_alert = "🟠"
+                    
+                    st.markdown(f"""
+                    **{idx}. {emoji_alert} {producto_nombre[:60]}{'...' if len(producto_nombre) > 60 else ''}**  
+                    ⭐ **{rating:.1f}** | 💰 ${precio:.2f} | 📊 {reviews:,.0f} reviews | 🏪 {fuente}
+                    """)
+                    
+                if len(low_rating_products) > 10:
+                    st.info(f"💡 Mostrando los primeros 10 de {len(low_rating_products)} productos")
 
 with alerts_col3:
     # Oportunidades de mercado
@@ -976,8 +1020,149 @@ with alerts_col3:
             st.markdown("""
             <div class="opportunity-box">
                 <h5>💎 Oportunidades Detectadas</h5>
-                <p>{} productos con excelente relación calidad-precio</p>
+                <p><strong>{} productos</strong> con excelente relación calidad-precio</p>
                 <p>Potencial de crecimiento alto</p>
             </div>
             """.format(len(high_value_products)), 
             unsafe_allow_html=True)
+            
+            # Expandible con lista de productos
+            with st.expander(f"📋 Ver {len(high_value_products)} oportunidades de mercado"):
+                # Ordenar por mejor valor score
+                high_value_sorted = high_value_products.sort_values('valor_score', ascending=False)
+                
+                for idx, (_, product) in enumerate(high_value_sorted.head(10).iterrows(), 1):
+                    precio = product.get('precio_num', 0)
+                    producto_nombre = product.get('producto', 'Producto sin nombre')
+                    fuente = product.get('fuente', 'N/A')
+                    rating = product.get('rating_num', 0)
+                    valor_score = product.get('valor_score', 0)
+                    categoria = product.get('categoria', 'N/A')
+                    
+                    # Emoji según el score de valor
+                    if valor_score > 1.0:
+                        emoji_value = "🌟"
+                    elif valor_score > 0.8:
+                        emoji_value = "⭐"
+                    else:
+                        emoji_value = "💎"
+                    
+                    st.markdown(f"""
+                    **{idx}. {emoji_value} {producto_nombre[:60]}{'...' if len(producto_nombre) > 60 else ''}**  
+                    📊 **Score: {valor_score:.2f}** | ⭐ {rating:.1f} | 💰 ${precio:.2f}  
+                    🏷️ {categoria} | 🏪 {fuente}
+                    """)
+                    
+                if len(high_value_products) > 10:
+                    st.info(f"💡 Mostrando las primeras 10 de {len(high_value_products)} oportunidades")
+
+# Sección adicional: Resumen ejecutivo de alertas
+st.markdown("### 📊 Resumen Ejecutivo de Alertas")
+
+# Crear resumen en una sola fila
+exec_col1, exec_col2, exec_col3, exec_col4 = st.columns(4)
+
+with exec_col1:
+    total_alerts = 0
+    if 'precio_num' in df_filtrado.columns:
+        high_price_count = len(df_filtrado[df_filtrado['precio_num'] > df_filtrado['precio_num'].quantile(0.95)])
+        total_alerts += high_price_count
+    else:
+        high_price_count = 0
+    
+    st.metric(
+        label="🚨 Alertas de Precio Alto",
+        value=high_price_count,
+        delta=f"{(high_price_count/len(df_filtrado)*100):.1f}% del total" if len(df_filtrado) > 0 else "0%"
+    )
+
+with exec_col2:
+    if 'rating_num' in df_filtrado.columns:
+        low_quality_count = len(df_filtrado[df_filtrado['rating_num'] < 3.5])
+        total_alerts += low_quality_count
+    else:
+        low_quality_count = 0
+    
+    st.metric(
+        label="⭐ Alertas de Calidad",
+        value=low_quality_count,
+        delta=f"{(low_quality_count/len(df_filtrado)*100):.1f}% del total" if len(df_filtrado) > 0 else "0%"
+    )
+
+with exec_col3:
+    if 'valor_score' in df_filtrado.columns:
+        opportunities_count = len(df_filtrado[df_filtrado['valor_score'] > df_filtrado['valor_score'].quantile(0.9)])
+    else:
+        opportunities_count = 0
+    
+    st.metric(
+        label="💎 Oportunidades",
+        value=opportunities_count,
+        delta=f"{(opportunities_count/len(df_filtrado)*100):.1f}% del total" if len(df_filtrado) > 0 else "0%"
+    )
+
+with exec_col4:
+    st.metric(
+        label="📊 Total Alertas",
+        value=total_alerts,
+        delta=f"De {len(df_filtrado):,} productos analizados"
+    )
+
+# Alertas críticas adicionales
+if len(df_filtrado) > 0:
+    st.markdown("### ⚠️ Alertas Críticas Adicionales")
+    
+    critical_col1, critical_col2 = st.columns(2)
+    
+    with critical_col1:
+        # Productos sin reviews suficientes
+        if 'reviews_num' in df_filtrado.columns:
+            low_reviews = df_filtrado[df_filtrado['reviews_num'] < 100]
+            if len(low_reviews) > 0:
+                st.warning(f"📊 **{len(low_reviews)} productos** tienen menos de 100 reviews (datos insuficientes)")
+                
+                if st.checkbox("Mostrar productos con pocas reviews"):
+                    low_reviews_sorted = low_reviews.sort_values('reviews_num', ascending=True)
+                    for _, product in low_reviews_sorted.head(5).iterrows():
+                        st.text(f"• {product.get('producto', 'N/A')[:50]}... - {product.get('reviews_num', 0):.0f} reviews")
+    
+    with critical_col2:
+        # Productos con precio extremadamente bajo (posibles problemas de calidad)
+        if 'precio_num' in df_filtrado.columns:
+            very_cheap = df_filtrado[df_filtrado['precio_num'] < df_filtrado['precio_num'].quantile(0.05)]
+            if len(very_cheap) > 0:
+                st.info(f"💰 **{len(very_cheap)} productos** tienen precios extremadamente bajos (posible dumping)")
+                
+                if st.checkbox("Mostrar productos de precio muy bajo"):
+                    very_cheap_sorted = very_cheap.sort_values('precio_num', ascending=True)
+                    for _, product in very_cheap_sorted.head(5).iterrows():
+                        st.text(f"• {product.get('producto', 'N/A')[:50]}... - ${product.get('precio_num', 0):.2f}")
+
+# Acciones recomendadas
+st.markdown("### 🎯 Acciones Recomendadas")
+
+actions_col1, actions_col2 = st.columns(2)
+
+with actions_col1:
+    st.markdown("""
+    <div class="insight-box">
+        <h5>📈 Estrategias de Mercado</h5>
+        <ul>
+            <li><strong>Precios altos:</strong> Analizar justificación de premium pricing</li>
+            <li><strong>Baja calidad:</strong> Investigar problemas de productos</li>
+            <li><strong>Oportunidades:</strong> Considerar productos similares</li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
+
+with actions_col2:
+    st.markdown("""
+    <div class="opportunity-box">
+        <h5>🔍 Próximos Pasos</h5>
+        <ul>
+            <li><strong>Monitoreo:</strong> Seguimiento semanal de alertas</li>
+            <li><strong>Análisis:</strong> Deep dive en categorías críticas</li>
+            <li><strong>Competencia:</strong> Benchmarking vs competidores</li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
