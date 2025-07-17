@@ -1,0 +1,28 @@
+version: '3.8'
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: supplements_mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: supplements_db
+    volumes:
+      - mongodb_data:/data/db
+
+  streamlit:
+    build: .
+    container_name: supplements_dashboard
+    restart: always
+    ports:
+      - "8501:8501"
+    depends_on:
+      - mongodb
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/
+    volumes:
+      - .:/app
+
+volumes:
+  mongodb_data:
