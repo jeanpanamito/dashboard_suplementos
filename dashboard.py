@@ -726,6 +726,43 @@ def apply_filters(df, filters):
     
     return df_filtrado
 
+def generate_star_rating(rating, max_rating=5.0):
+    """Genera una representación visual de estrellas con relleno gradual basada en el rating"""
+    if pd.isna(rating) or rating == 0:
+        return '<span style="color: #666666;">☆☆☆☆☆</span>'
+    
+    # Asegurar que el rating no exceda el máximo
+    rating = min(rating, max_rating)
+    
+    stars_html = ""
+    
+    for i in range(int(max_rating)):
+        star_value = rating - i
+        
+        if star_value >= 1:
+            # Estrella completamente llena
+            stars_html += '<span style="color: #FFD700; font-size: 1.1em;">★</span>'
+        elif star_value > 0:
+            # Estrella parcialmente llena - usar gradiente CSS
+            percentage = int(star_value * 100)
+            stars_html += f'''
+            <span style="position: relative; display: inline-block; font-size: 1.1em;">
+                <span style="color: #666666;">☆</span>
+                <span style="
+                    position: absolute; 
+                    left: 0; 
+                    top: 0; 
+                    width: {percentage}%; 
+                    overflow: hidden; 
+                    color: #FFD700;
+                ">★</span>
+            </span>'''
+        else:
+            # Estrella vacía
+            stars_html += '<span style="color: #666666; font-size: 1.1em;">☆</span>'
+    
+    return stars_html
+
 # ==================== INTERFAZ PRINCIPAL ====================
 
 # Header principal
@@ -733,19 +770,12 @@ st.markdown("""
 <div class="main-header">
 """, unsafe_allow_html=True)
 
-# Logo en esquina superior derecha y título centrado
-title_col, logo_col = st.columns([4, 1])
-with title_col:
-    st.markdown(f"""
-    <h1 style="color: white; margin: 0; text-align: center; line-height: 100px;">
-        {Config.PAGE_TITLE}
-    </h1>
-    """, unsafe_allow_html=True)
-with logo_col:
-    try:
-        st.image("gainsight.png", width=100)
-    except:
-        st.write("🏋️")  # Fallback si no encuentra la imagen
+# Título centrado
+st.markdown(f"""
+<h1 style="color: white; margin: 0; text-align: center; line-height: 100px; font-size: 3.5rem;">
+    {Config.PAGE_TITLE}
+</h1>
+""", unsafe_allow_html=True)
 
 st.markdown("""
     <p style="color: #e0e0e0; margin: 0; text-align: center; font-size: 1.2em;">Dashboard de Inteligencia de Mercado para Suplementos Deportivos</p>
@@ -961,11 +991,12 @@ with alerts_col1:
                     producto_nombre = product.get('producto', 'Producto sin nombre')
                     fuente = product.get('fuente', 'N/A')
                     rating = product.get('rating_num', 0)
+                    stars_display = generate_star_rating(rating)
                     
                     st.markdown(f"""
                     **{idx}. {producto_nombre[:60]}{'...' if len(producto_nombre) > 60 else ''}**  
-                    💰 **${precio:.2f}** | ⭐ {rating:.1f} | 🏪 {fuente}
-                    """)
+                    💰 **${precio:.2f}** | {stars_display} {rating:.1f} | 🏪 {fuente}
+                    """, unsafe_allow_html=True)
                     
                 if len(high_price_products) > 10:
                     st.info(f"💡 Mostrando los primeros 10 de {len(high_price_products)} productos")
@@ -995,6 +1026,7 @@ with alerts_col2:
                     fuente = product.get('fuente', 'N/A')
                     rating = product.get('rating_num', 0)
                     reviews = product.get('reviews_num', 0)
+                    stars_display = generate_star_rating(rating)
                     
                     # Determinar color de alerta
                     if rating < 2.0:
@@ -1006,8 +1038,8 @@ with alerts_col2:
                     
                     st.markdown(f"""
                     **{idx}. {emoji_alert} {producto_nombre[:60]}{'...' if len(producto_nombre) > 60 else ''}**  
-                    ⭐ **{rating:.1f}** | 💰 ${precio:.2f} | 📊 {reviews:,.0f} reviews | 🏪 {fuente}
-                    """)
+                    {stars_display} **{rating:.1f}** | 💰 ${precio:.2f} | 📊 {reviews:,.0f} reviews | 🏪 {fuente}
+                    """, unsafe_allow_html=True)
                     
                 if len(low_rating_products) > 10:
                     st.info(f"💡 Mostrando los primeros 10 de {len(low_rating_products)} productos")
@@ -1038,6 +1070,7 @@ with alerts_col3:
                     rating = product.get('rating_num', 0)
                     valor_score = product.get('valor_score', 0)
                     categoria = product.get('categoria', 'N/A')
+                    stars_display = generate_star_rating(rating)
                     
                     # Emoji según el score de valor
                     if valor_score > 1.0:
@@ -1049,9 +1082,9 @@ with alerts_col3:
                     
                     st.markdown(f"""
                     **{idx}. {emoji_value} {producto_nombre[:60]}{'...' if len(producto_nombre) > 60 else ''}**  
-                    📊 **Score: {valor_score:.2f}** | ⭐ {rating:.1f} | 💰 ${precio:.2f}  
+                    📊 **Score: {valor_score:.2f}** | {stars_display} {rating:.1f} | 💰 ${precio:.2f}  
                     🏷️ {categoria} | 🏪 {fuente}
-                    """)
+                    """, unsafe_allow_html=True)
                     
                 if len(high_value_products) > 10:
                     st.info(f"💡 Mostrando las primeras 10 de {len(high_value_products)} oportunidades")
@@ -1114,42 +1147,29 @@ if len(df_filtrado) > 0:
     
     critical_col1, critical_col2 = st.columns(2)
     
-    # ...existing code...
-with critical_col1:
-    # Productos sin reviews suficientes
-    if 'reviews_num' in df_filtrado.columns:
-        low_reviews = df_filtrado[df_filtrado['reviews_num'] < 100]
-        if len(low_reviews) > 0:
-            st.warning(f"📊 **{len(low_reviews)} productos** tienen menos de 100 reviews (datos insuficientes)")
-            
-            if st.checkbox("Mostrar productos con pocas reviews"):
-                low_reviews_sorted = low_reviews.sort_values('reviews_num', ascending=True)
-                for _, product in low_reviews_sorted.head(5).iterrows():
-                    nombre = product.get('producto', 'N/A')[:50]
-                    reviews = product.get('reviews_num', 0)
-                    link = product.get('link', None) or product.get('url', None)
-                    if link:
-                        st.markdown(f"• [{nombre}]({link}) - {reviews:.0f} reviews")
-                    else:
-                        st.text(f"• {nombre}... - {reviews:.0f} reviews")
-
-with critical_col2:
-    # Productos con precio extremadamente bajo (posibles problemas de calidad)
-    if 'precio_num' in df_filtrado.columns:
-        very_cheap = df_filtrado[df_filtrado['precio_num'] < df_filtrado['precio_num'].quantile(0.05)]
-        if len(very_cheap) > 0:
-            st.info(f"💰 **{len(very_cheap)} productos** tienen precios extremadamente bajos (posible dumping)")
-            
-            if st.checkbox("Mostrar productos de precio muy bajo"):
-                very_cheap_sorted = very_cheap.sort_values('precio_num', ascending=True)
-                for _, product in very_cheap_sorted.head(5).iterrows():
-                    nombre = product.get('producto', 'N/A')[:50]
-                    precio = product.get('precio_num', 0)
-                    link = product.get('link', None) or product.get('url', None)
-                    if link:
-                        st.markdown(f"• [{nombre}]({link}) - ${precio:.2f}")
-                    else:
-                        st.text(f"• {nombre}... - ${precio:.2f}")
+    with critical_col1:
+        # Productos sin reviews suficientes
+        if 'reviews_num' in df_filtrado.columns:
+            low_reviews = df_filtrado[df_filtrado['reviews_num'] < 100]
+            if len(low_reviews) > 0:
+                st.warning(f"📊 **{len(low_reviews)} productos** tienen menos de 100 reviews (datos insuficientes)")
+                
+                if st.checkbox("Mostrar productos con pocas reviews"):
+                    low_reviews_sorted = low_reviews.sort_values('reviews_num', ascending=True)
+                    for _, product in low_reviews_sorted.head(5).iterrows():
+                        st.text(f"• {product.get('producto', 'N/A')[:50]}... - {product.get('reviews_num', 0):.0f} reviews")
+    
+    with critical_col2:
+        # Productos con precio extremadamente bajo (posibles problemas de calidad)
+        if 'precio_num' in df_filtrado.columns:
+            very_cheap = df_filtrado[df_filtrado['precio_num'] < df_filtrado['precio_num'].quantile(0.05)]
+            if len(very_cheap) > 0:
+                st.info(f"💰 **{len(very_cheap)} productos** tienen precios extremadamente bajos (posible dumping)")
+                
+                if st.checkbox("Mostrar productos de precio muy bajo"):
+                    very_cheap_sorted = very_cheap.sort_values('precio_num', ascending=True)
+                    for _, product in very_cheap_sorted.head(5).iterrows():
+                        st.text(f"• {product.get('producto', 'N/A')[:50]}... - ${product.get('precio_num', 0):.2f}")
 
 # Acciones recomendadas
 st.markdown("### 🎯 Acciones Recomendadas")
