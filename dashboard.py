@@ -1157,19 +1157,31 @@ if len(df_filtrado) > 0:
                 if st.checkbox("Mostrar productos con pocas reviews"):
                     low_reviews_sorted = low_reviews.sort_values('reviews_num', ascending=True)
                     for _, product in low_reviews_sorted.head(5).iterrows():
-                        st.text(f"• {product.get('producto', 'N/A')[:50]}... - {product.get('reviews_num', 0):.0f} reviews")
-    
-    with critical_col2:
-        # Productos con precio extremadamente bajo (posibles problemas de calidad)
-        if 'precio_num' in df_filtrado.columns:
-            very_cheap = df_filtrado[df_filtrado['precio_num'] < df_filtrado['precio_num'].quantile(0.05)]
-            if len(very_cheap) > 0:
-                st.info(f"💰 **{len(very_cheap)} productos** tienen precios extremadamente bajos (posible dumping)")
-                
-                if st.checkbox("Mostrar productos de precio muy bajo"):
-                    very_cheap_sorted = very_cheap.sort_values('precio_num', ascending=True)
-                    for _, product in very_cheap_sorted.head(5).iterrows():
-                        st.text(f"• {product.get('producto', 'N/A')[:50]}... - ${product.get('precio_num', 0):.2f}")
+                        nombre = product.get('producto', 'N/A')[:50]
+                        reviews = product.get('reviews_num', 0)
+                        link = product.get('link', None) or product.get('url', None)
+                        if link:
+                            st.markdown(f"• [{nombre}]({link}) - {reviews:.0f} reviews")
+                        else:
+                            st.text(f"• {nombre}... - {reviews:.0f} reviews")
+
+with critical_col2:
+    # Productos con precio extremadamente bajo (posibles problemas de calidad)
+    if 'precio_num' in df_filtrado.columns:
+        very_cheap = df_filtrado[df_filtrado['precio_num'] < df_filtrado['precio_num'].quantile(0.05)]
+        if len(very_cheap) > 0:
+            st.info(f"💰 **{len(very_cheap)} productos** tienen precios extremadamente bajos (posible dumping)")
+            
+            if st.checkbox("Mostrar productos de precio muy bajo"):
+                very_cheap_sorted = very_cheap.sort_values('precio_num', ascending=True)
+                for _, product in very_cheap_sorted.head(5).iterrows():
+                    nombre = product.get('producto', 'N/A')[:50]
+                    precio = product.get('precio_num', 0)
+                    link = product.get('link', None) or product.get('url', None)
+                    if link:
+                        st.markdown(f"• [{nombre}]({link}) - ${precio:.2f}")
+                    else:
+                        st.text(f"• {nombre}... - ${precio:.2f}")
 
 # Acciones recomendadas
 st.markdown("### 🎯 Acciones Recomendadas")
