@@ -909,16 +909,12 @@ st.sidebar.metric("Filtros Activos", sum([
     filters['reviews_minimo'] > 0
 ]))
 
-st.sidebar.markdown("### 💡 Acciones Rápidas")
-if st.sidebar.button("📊 Exportar Análisis"):
-    st.sidebar.success("Funcionalidad de exportación próximamente")
+
 
 if st.sidebar.button("🔄 Actualizar Datos"):
     st.cache_data.clear()
     st.rerun()
 
-if st.sidebar.button("📋 Reporte Ejecutivo"):
-    st.sidebar.info("Generando reporte ejecutivo...")
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("### ℹ️ Acerca del Dashboard")
@@ -957,14 +953,6 @@ with st.expander("🔧 Panel de Control Avanzado"):
         rating_alert = st.number_input("Alerta de Rating Bajo", value=3.0, max_value=5.0)
         review_alert = st.number_input("Alerta de Pocas Reviews", value=100)
     
-    with col3:
-        st.subheader("⚡ Acciones Avanzadas")
-        if st.button("🔍 Análisis Predictivo"):
-            st.info("Funcionalidad próximamente")
-        if st.button("📧 Configurar Alertas"):
-            st.info("Sistema de alertas próximamente")
-        if st.button("🎯 Análisis de Competidores"):
-            st.info("Análisis competitivo avanzado próximamente")
 
 # Alertas automáticas basadas en los datos con productos específicos
 st.markdown("### 🚨 Alertas de Mercado")
